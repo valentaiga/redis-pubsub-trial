@@ -2,7 +2,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Options;
 using RedisPubSub.Common.Models;
 using RedisPubSub.Common.Options;
-using StackExchange.Redis;
+using RedisPubSub.Redis;
 
 #nullable disable
 namespace RedisPubSub.Consumer;
@@ -10,19 +10,19 @@ namespace RedisPubSub.Consumer;
 public class Consumer : BackgroundService
 {
     private readonly ILogger<Consumer> _logger;
-    private readonly ConnectionMultiplexer _connection;
+    private readonly IRedisProvider _redisProvider;
     private readonly string _channel;
 
-    public Consumer(ILogger<Consumer> logger, IOptions<RedisConfiguration> redisConfig)
+    public Consumer(ILogger<Consumer> logger, IOptions<RedisConfig> redisConfig, IRedisProvider redisProvider)
     {
         _logger = logger;
-        _connection  = ConnectionMultiplexer.Connect(redisConfig.Value.ConnectionString);
+        _redisProvider = redisProvider;
         _channel = redisConfig.Value.Channel;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var subscriber = _connection.GetSubscriber(_channel);
+        var subscriber = _redisProvider.GetSubscriber(_channel);
 
         await subscriber.SubscribeAsync(_channel, (channel, jsonMsg) =>
         {

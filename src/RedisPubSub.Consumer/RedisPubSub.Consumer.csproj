@@ -14,6 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\RedisPubSub.Redis\RedisPubSub.Redis.csproj" />
       <ProjectReference Include="..\RedisPubSub.Common\RedisPubSub.Common.csproj" />
     </ItemGroup>
 </Project>

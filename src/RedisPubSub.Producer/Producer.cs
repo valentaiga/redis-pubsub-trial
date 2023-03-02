@@ -2,26 +2,26 @@ using System.Text.Json;
 using Microsoft.Extensions.Options;
 using RedisPubSub.Common.Models;
 using RedisPubSub.Common.Options;
-using StackExchange.Redis;
+using RedisPubSub.Redis;
 
 namespace RedisPubSub.Producer;
 
 public class Producer : BackgroundService
 {
     private readonly ILogger<Producer> _logger;
-    private readonly ConnectionMultiplexer _connection;
+    private readonly IRedisProvider _redisProvider;
     private readonly string _channel;
 
-    public Producer(ILogger<Producer> logger, IOptions<RedisConfiguration> redisConfig)
+    public Producer(ILogger<Producer> logger, IOptions<RedisConfig> redisConfig, IRedisProvider redisProvider)
     {
         _logger = logger;
-        _connection  = ConnectionMultiplexer.Connect(redisConfig.Value.ConnectionString);
+        _redisProvider = redisProvider;
         _channel = redisConfig.Value.Channel;
     } 
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var subscriber = _connection.GetSubscriber(_channel);
+        var subscriber = _redisProvider.GetSubscriber(_channel);
         while (!stoppingToken.IsCancellationRequested)
         {
             var traceIdStab = Guid.NewGuid().ToString();
