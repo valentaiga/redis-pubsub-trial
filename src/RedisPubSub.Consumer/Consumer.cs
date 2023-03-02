@@ -10,19 +10,20 @@ namespace RedisPubSub.Consumer;
 public class Consumer : BackgroundService
 {
     private readonly ILogger<Consumer> _logger;
-    private readonly IRedisProvider _redisProvider;
+    private readonly IRedisMultiplexer _redisMultiplexer;
     private readonly string _channel;
 
-    public Consumer(ILogger<Consumer> logger, IOptions<RedisConfig> redisConfig, IRedisProvider redisProvider)
+    public Consumer(ILogger<Consumer> logger, IOptions<RedisConfig> redisConfig, IRedisMultiplexer redisMultiplexer)
     {
         _logger = logger;
-        _redisProvider = redisProvider;
+        _redisMultiplexer = redisMultiplexer;
         _channel = redisConfig.Value.Channel;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var subscriber = _redisProvider.GetSubscriber(_channel);
+        var multiplexer = await _redisMultiplexer.ConnectAsync();
+        var subscriber = multiplexer.GetSubscriber(_channel);
 
         await subscriber.SubscribeAsync(_channel, (channel, jsonMsg) =>
         {

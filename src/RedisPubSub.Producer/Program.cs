@@ -11,8 +11,8 @@ IHost host = Host.CreateDefaultBuilder(args)
             .BindConfiguration("Redis")
             .ValidateDataAnnotations()
             .ValidateOnStart();
-        services.AddSingleton<IRedisProvider, RedisProvider>();
-        services.AddTransient<IConnectionMultiplexer>(src => src.GetRequiredService<IRedisProvider>().Connect());
+        services.AddSingleton<IRedisMultiplexer, RedisMultiplexer>();
+        services.AddTransient<IConnectionMultiplexer>(src => src.GetRequiredService<IRedisMultiplexer>().Connect());
 
         services.ConfigureOpenTelemetry(context.Configuration, "OpenTelemetry");
 

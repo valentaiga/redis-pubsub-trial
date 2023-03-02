@@ -9,7 +9,8 @@ IHost host = Host.CreateDefaultBuilder(args)
             .BindConfiguration("Redis")
             .ValidateDataAnnotations()
             .ValidateOnStart();
-        services.AddSingleton<IRedisProvider, RedisProvider>();
+        services.AddSingleton<IRedisMultiplexer, RedisMultiplexer>();
+        
         services.AddHostedService<Consumer>();
     })
     .Build();

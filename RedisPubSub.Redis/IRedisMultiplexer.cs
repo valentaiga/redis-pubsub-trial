@@ -2,8 +2,8 @@ using StackExchange.Redis;
 
 namespace RedisPubSub.Redis;
 
-public interface IRedisProvider
+public interface IRedisMultiplexer
 {
     ConnectionMultiplexer Connect();
-    ISubscriber GetSubscriber(string channel);
+    Task<ConnectionMultiplexer> ConnectAsync();
 }

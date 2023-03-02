@@ -11,20 +11,21 @@ public class Producer : BackgroundService
 {
     private readonly ActivitySource _activitySource;
     private readonly ILogger<Producer> _logger;
-    private readonly IRedisProvider _redisProvider;
+    private readonly IRedisMultiplexer _redisMultiplexer;
     private readonly string _channel;
 
-    public Producer(ILogger<Producer> logger, IOptions<RedisConfig> redisConfig, IOptions<OpenTelemetryConfig> otlmConfig, IRedisProvider redisProvider)
+    public Producer(ILogger<Producer> logger, IOptions<RedisConfig> redisConfig, IOptions<OpenTelemetryConfig> otlmConfig, IRedisMultiplexer redisMultiplexer)
     {
         _logger = logger;
-        _redisProvider = redisProvider;
+        _redisMultiplexer = redisMultiplexer;
         _channel = redisConfig.Value.Channel;
         _activitySource = new ActivitySource(otlmConfig.Value.ServiceName);
     } 
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var subscriber = _redisProvider.GetSubscriber(_channel);
+        var multiplexer = await _redisMultiplexer.ConnectAsync();
+        var subscriber = multiplexer.GetSubscriber(_channel);
         
         while (!stoppingToken.IsCancellationRequested)
         {
