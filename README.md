@@ -6,10 +6,26 @@ Publish Subscribe Messaging In .NET With Redis Channels
 - [ ] OpenTelemetry distributed traces 
 
 ## Environment setup
-Run redis on localhost with docker:  
-`docker run -d -p 6379:6379 --name redis redis`  
+1. Run a redis on localhost with docker:  
+`docker run -d -p 6379:6379 --name redis redis`
+2. Run a jaeger on localhost with docker:  
+`docker run -d --name jaeger \             
+   -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
+   -e COLLECTOR_OTLP_ENABLED=true \
+   -p 6831:6831/udp \
+   -p 6832:6832/udp \
+   -p 5778:5778 \
+   -p 16686:16686 \
+   -p 4317:4317 \
+   -p 4318:4318 \
+   -p 14250:14250 \
+   -p 14268:14268 \
+   -p 14269:14269 \
+   -p 9411:9411 \
+   jaegertracing/all-in-one:latest`
+3. Traces are available on http://localhost:16686 endpoint
 
-## Theory
+## Redis PubSub Theory
 Messages sent by other clients to these channels will be pushed by Redis to all the subscribed clients.  
 
 ### Format of pushed messages
@@ -34,9 +50,8 @@ The Redis Pub/Sub implementation supports pattern matching. Clients may subscrib
 - Unreliable delivery/lossy messaging
   - If it doesn’t matter if some messages are simply discarded due to unreliable delivery
 
-## When to use
+### When to use
 - A requirement for at-most-once delivery per subscriber
   - i.e. subscribers are not capable of detecting duplicate messages and target systems are not idempotent
 - If subscribers have short-lived, evolving, or dynamic interest in channels, and only want to receive messages from specific channels for finite periods of time 
   - e.g. mobile IoT devices may only be intermittently connected, and only interested and able to respond to current messages at their location
- 

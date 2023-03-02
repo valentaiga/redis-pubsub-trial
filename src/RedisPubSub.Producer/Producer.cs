@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using RedisPubSub.Common.Models;
@@ -8,31 +9,50 @@ namespace RedisPubSub.Producer;
 
 public class Producer : BackgroundService
 {
+    private readonly ActivitySource _activitySource;
     private readonly ILogger<Producer> _logger;
     private readonly IRedisProvider _redisProvider;
     private readonly string _channel;
 
-    public Producer(ILogger<Producer> logger, IOptions<RedisConfig> redisConfig, IRedisProvider redisProvider)
+    public Producer(ILogger<Producer> logger, IOptions<RedisConfig> redisConfig, IOptions<OpenTelemetryConfig> otlmConfig, IRedisProvider redisProvider)
     {
         _logger = logger;
         _redisProvider = redisProvider;
         _channel = redisConfig.Value.Channel;
+        _activitySource = new ActivitySource(otlmConfig.Value.ServiceName);
     } 
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var subscriber = _redisProvider.GetSubscriber(_channel);
+        
         while (!stoppingToken.IsCancellationRequested)
         {
-            var traceIdStab = Guid.NewGuid().ToString();
+            using var activity = _activitySource.StartActivity()!;
+            activity.SetTag("redis.client_name", subscriber.Multiplexer.ClientName);
+            activity.SetTag("redis.operations_count", subscriber.Multiplexer.OperationCount);
             
-            var msg = new Message<string>(traceIdStab, traceIdStab);
-            var json = JsonSerializer.Serialize(msg);
+            using (_activitySource.StartActivity("ExpectedDelay"))
+            {
+                await Task.Delay(300, stoppingToken);
+            }
+
+            activity.AddEvent(new ActivityEvent("DelayFinished"));
+            
+            activity.SetTag("my_tag", "WorkingTag");
+
+            var msg = new Message<string>("Some Data", activity.TraceId.ToString());
+            var json = Serialize(msg);
+            activity.AddEvent(new ActivityEvent("DataSerialized"));
             
             await subscriber.PublishAsync(_channel, json);
-            
+            activity.AddEvent(new ActivityEvent("DataPublished"));
+
             _logger.LogInformation("Message sent: {TraceId}, {Data}", msg.TraceId, msg.Data);
-            await Task.Delay(5000, stoppingToken);
+            await Task.Delay(4700, stoppingToken);
         }
     }
+
+    private static string Serialize<T>(T value) // just for OpenTelemetry tracking purpose
+        => JsonSerializer.Serialize(value);
 }
