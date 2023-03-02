@@ -2,7 +2,7 @@
 Publish Subscribe Messaging In .NET With Redis Channels
 
 ## Goals
-- [ ] Build PubSub messaging under RedisMQ
+- [x] Build PubSub messaging under RedisMQ
 - [ ] OpenTelemetry distributed traces 
 
 ## Environment setup
