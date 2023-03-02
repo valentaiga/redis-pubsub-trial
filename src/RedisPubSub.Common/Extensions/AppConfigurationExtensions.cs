@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Resources;
@@ -16,6 +17,8 @@ public static class AppConfigurationExtensions
             .BindConfiguration(configSectionPath)
             .ValidateDataAnnotations()
             .ValidateOnStart();
+
+        services.AddSingleton(_ => new ActivitySource(otlmSettings.ServiceName));
         
         services.AddOpenTelemetry()
             .WithTracing(traceBuilder =>
@@ -25,6 +28,7 @@ public static class AppConfigurationExtensions
                         ResourceBuilder.CreateDefault()
                             .AddService(
                                 serviceName: otlmSettings.ServiceName, 
+                                serviceNamespace: otlmSettings.Namespace,
                                 serviceInstanceId: otlmSettings.ServiceInstanceId))
                     .AddRedisInstrumentation()
                     .AddConsoleExporter()

@@ -14,12 +14,16 @@ public class Producer : BackgroundService
     private readonly IRedisMultiplexer _redisMultiplexer;
     private readonly string _channel;
 
-    public Producer(ILogger<Producer> logger, IOptions<RedisConfig> redisConfig, IOptions<OpenTelemetryConfig> otlmConfig, IRedisMultiplexer redisMultiplexer)
+    public Producer(
+        ILogger<Producer> logger,
+        IOptions<RedisConfig> redisConfig,
+        IRedisMultiplexer redisMultiplexer,
+        ActivitySource activitySource)
     {
         _logger = logger;
         _redisMultiplexer = redisMultiplexer;
         _channel = redisConfig.Value.Channel;
-        _activitySource = new ActivitySource(otlmConfig.Value.ServiceName);
+        _activitySource = activitySource;
     } 
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -29,31 +33,36 @@ public class Producer : BackgroundService
         
         while (!stoppingToken.IsCancellationRequested)
         {
-            using var activity = _activitySource.StartActivity()!;
-            activity.SetTag("redis.client_name", subscriber.Multiplexer.ClientName);
-            activity.SetTag("redis.operations_count", subscriber.Multiplexer.OperationCount);
-            
-            using (_activitySource.StartActivity("ExpectedDelay"))
+            using (var activity = _activitySource.StartActivity("Producer Processing")!)
             {
-                await Task.Delay(300, stoppingToken);
+                activity.SetTag("redis.client_name", subscriber.Multiplexer.ClientName);
+                activity.SetTag("redis.operations_count", subscriber.Multiplexer.OperationCount);
+
+                using (_activitySource.StartActivity("Expected Delay"))
+                {
+                    await Task.Delay(300, stoppingToken);
+                }
+
+                activity.AddEvent(new ActivityEvent("DelayFinished"));
+
+                activity.SetTag("my_tag", "WorkingTag");
+
+                var msg = new Message<string>("Some Data", activity.TraceId.ToString());
+                var json = Serialize(msg);
+                activity.AddEvent(new ActivityEvent("DataSerialized"));
+
+                await subscriber.PublishAsync(_channel, json);
+                activity.AddEvent(new ActivityEvent("DataPublished"));
+
+                _logger.LogInformation("Message sent: {TraceId}, {Data}", msg.TraceId, msg.Data);
             }
-
-            activity.AddEvent(new ActivityEvent("DelayFinished"));
-            
-            activity.SetTag("my_tag", "WorkingTag");
-
-            var msg = new Message<string>("Some Data", activity.TraceId.ToString());
-            var json = Serialize(msg);
-            activity.AddEvent(new ActivityEvent("DataSerialized"));
-            
-            await subscriber.PublishAsync(_channel, json);
-            activity.AddEvent(new ActivityEvent("DataPublished"));
-
-            _logger.LogInformation("Message sent: {TraceId}, {Data}", msg.TraceId, msg.Data);
             await Task.Delay(4700, stoppingToken);
         }
     }
 
-    private static string Serialize<T>(T value) // just for OpenTelemetry tracking purpose
-        => JsonSerializer.Serialize(value);
+    private string Serialize<T>(T value) // just for OpenTelemetry tracking purpose
+    {
+        using var activity = _activitySource.StartActivity("Serializing");
+        return JsonSerializer.Serialize(value);
+    }
 }
