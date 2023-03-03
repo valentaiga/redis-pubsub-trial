@@ -3,7 +3,7 @@ Publish Subscribe Messaging In .NET With Redis Channels
 
 ## Goals
 - [x] Build PubSub messaging under RedisMQ
-- [ ] OpenTelemetry distributed traces 
+- [x] OpenTelemetry distributed traces 
 
 ## Environment setup
 1. Run a redis on localhost with docker:  
