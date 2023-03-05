@@ -11,6 +11,9 @@ public static class AppConfigurationExtensions
 {
     public static void ConfigureOpenTelemetry(this IServiceCollection services, IConfiguration configuration, string configSectionPath)
     {
+        Activity.DefaultIdFormat = ActivityIdFormat.W3C;
+        Activity.ForceDefaultIdFormat = true;
+        
         var otlmSettings = configuration.GetSection(configSectionPath).Get<OpenTelemetryConfig>()!;
         
         services.AddOptions<OpenTelemetryConfig>()
@@ -28,7 +31,6 @@ public static class AppConfigurationExtensions
                         ResourceBuilder.CreateDefault()
                             .AddService(
                                 serviceName: otlmSettings.ServiceName, 
-                                serviceNamespace: otlmSettings.Namespace,
                                 serviceInstanceId: otlmSettings.ServiceInstanceId))
                     .AddRedisInstrumentation()
                     .AddConsoleExporter()

@@ -1,9 +1,15 @@
 # Redis PubSub
-Publish Subscribe Messaging In .NET With Redis Channels
+Publish Subscribe Messaging In .NET with Redis Channels.  
+Traces with OpenTelemetry.
 
 ## Goals
 - [x] Build PubSub messaging under RedisMQ
 - [x] OpenTelemetry distributed traces 
+
+## Result
+Jaeger contains propagated span with both producer and consumer activities  
+![jaeger-span.png](docs/jaeger-span.png)
+![jaeger-span1.png](docs/jaeger-span1.png)
 
 ## Environment setup
 1. Run a redis on localhost with docker:  
