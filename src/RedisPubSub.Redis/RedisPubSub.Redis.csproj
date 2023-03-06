@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\src\RedisPubSub.Common\RedisPubSub.Common.csproj" />
+      <ProjectReference Include="..\RedisPubSub.Common\RedisPubSub.Common.csproj" />
     </ItemGroup>
 
 </Project>

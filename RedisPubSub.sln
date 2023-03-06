@@ -6,7 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisPubSub.Common", "src\R
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisPubSub.Consumer", "src\RedisPubSub.Consumer\RedisPubSub.Consumer.csproj", "{0B1F0D9C-9E27-4D40-9281-C2E1E79A9806}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisPubSub.Redis", "RedisPubSub.Redis\RedisPubSub.Redis.csproj", "{9D14216D-2B22-4E08-8FD2-8E8F36251F4E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisPubSub.Redis", "src\RedisPubSub.Redis\RedisPubSub.Redis.csproj", "{9D14216D-2B22-4E08-8FD2-8E8F36251F4E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
